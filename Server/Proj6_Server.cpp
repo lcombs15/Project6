@@ -13,6 +13,7 @@ Date: 04/16/2018
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string>
 #include <iostream>
 
 // Need to link with Ws2_32.lib
@@ -106,6 +107,7 @@ int __cdecl main(void)
 	do {
 		std::cout << "In the server loop, ready to recieve a command...\n";
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+		std::cout << "\n(" + string(recvbuf) + ")\n";
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 

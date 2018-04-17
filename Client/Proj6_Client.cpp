@@ -13,6 +13,10 @@ Date: 04/16/2018
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <fstream>
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -30,7 +34,7 @@ int __cdecl main(int argc, char **argv)
 	struct addrinfo *result = NULL,
 		*ptr = NULL,
 		hints;
-	char *sendbuf = "this is a test";
+	const char *sendbuf = "this is a test";
 	char recvbuf[DEFAULT_BUFLEN];
 	int iResult;
 	int recvbuflen = DEFAULT_BUFLEN;
@@ -101,7 +105,7 @@ int __cdecl main(int argc, char **argv)
 	}
 
 	printf("Bytes Sent: %ld\n", iResult);
-
+	/*
 	// shutdown the connection since no more data will be sent
 	iResult = shutdown(ConnectSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
@@ -110,10 +114,16 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-
+	*/
 	// Receive until the peer closes the connection
-	do {
 
+	do {
+		std::cout << "\nPlease enter a command: ";
+		std::string x;
+		std::cin >> x;
+		sendbuf = x.c_str();
+		std::cout << "\n";
+		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("Bytes received: %d\n", iResult);
