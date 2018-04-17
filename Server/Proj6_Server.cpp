@@ -13,12 +13,15 @@ Date: 04/16/2018
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27016"
+#define DEFAULT_PORT "5"
+
+using namespace std;
 
 int __cdecl main(void)
 {
@@ -49,7 +52,7 @@ int __cdecl main(void)
 	hints.ai_flags = AI_PASSIVE;
 
 	// Resolve the server address and port
-	iResult = getaddrinfo(0, DEFAULT_PORT, &hints, &result);
+	iResult = getaddrinfo("localhost", DEFAULT_PORT, &hints, &result);
 	if (iResult != 0) {
 		printf("getaddrinfo failed with error: %d\n", iResult);
 		WSACleanup();
@@ -85,6 +88,8 @@ int __cdecl main(void)
 		return 1;
 	}
 
+	std::cout << "Server Starting.....\nWaiting for clients.....";
+
 	// Accept a client socket
 	ClientSocket = accept(ListenSocket, NULL, NULL);
 	if (ClientSocket == INVALID_SOCKET) {
@@ -99,7 +104,7 @@ int __cdecl main(void)
 
 	// Receive until the peer shuts down the connection
 	do {
-
+		std::cout << "In the server loop, ready to recieve a command...";
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);

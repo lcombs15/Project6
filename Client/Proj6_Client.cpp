@@ -21,9 +21,9 @@ Date: 04/16/2018
 
 
 #define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27016"
+#define DEFAULT_PORT "5"
 
-int __cdecl mainLucas(int argc, char **argv)
+int __cdecl main(int argc, char **argv)
 {
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
