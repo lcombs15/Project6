@@ -39,3 +39,4 @@ Release/
 Release/
 *.docx
 *Debug/
+.vs

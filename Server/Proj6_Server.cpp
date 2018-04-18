@@ -107,7 +107,7 @@ int __cdecl main(void)
 	do {
 		std::cout << "In the server loop, ready to recieve a command...\n";
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-		std::cout << "\n(" + string(recvbuf) + ")\n";
+		std::cout << "\n(" + string(recvbuf).substr(0, strlen(recvbuf)) + ")\n";
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 

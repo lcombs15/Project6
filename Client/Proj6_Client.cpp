@@ -121,9 +121,8 @@ int __cdecl main(int argc, char **argv)
 		std::cout << "\nPlease enter a command: ";
 		std::string x;
 		std::cin >> x;
-		sendbuf = x.c_str();
 		std::cout << "\n";
-		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+		iResult = send(ConnectSocket, x.c_str(), x.length(), 0);
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("Bytes received: %d\n", iResult);
