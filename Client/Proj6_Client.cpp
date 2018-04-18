@@ -119,23 +119,30 @@ int __cdecl main(int argc, char **argv)
 	// Receive until the peer closes the connection
 
 	do {
-		for (int i = 0; i < DEFAULT_BUFLEN; i++) {
-			recvbuf[i] = '\0';
-		}
-		std::cout << "\nPlease enter a command: ";
+		//Prompt for command
+		std::cout << "In the client ready to send a command...\n:";
+
+		//Get command from keyboard
 		std::string x;
 		std::getline(std::cin, x);
-		std::cout << "\n";
-		const char* cstr = x.c_str();
+		std::cout << x << "\n";
+
+		//Send command text as C string
 		iResult = send(ConnectSocket, x.c_str(), DEFAULT_BUFLEN, 0);
+		std::cout 
+			<< "Bytes Sent: " << iResult << "\n"
+			<< "Command Sent: " << x << "\n";
+
+		//Get response from Server as C String
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
-			printf("Bytes received: %d\n", iResult);
+			printf("\nBytes received: %d\n", iResult);
 		else if (iResult == 0)
 			printf("Connection closed\n");
 		else
 			printf("recv failed with error: %d\n", WSAGetLastError());
 
+		std::cout << std::string(recvbuf) << "\n";
 	} while (iResult > 0);
 
 	// cleanup
