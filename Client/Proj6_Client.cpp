@@ -34,7 +34,7 @@ int __cdecl main(int argc, char **argv)
 	struct addrinfo *result = NULL,
 		*ptr = NULL,
 		hints;
-	const char *sendbuf = "this is a test";
+	char *sendbuf = new char[DEFAULT_BUFLEN];
 	char recvbuf[DEFAULT_BUFLEN];
 	int iResult;
 	int recvbuflen = DEFAULT_BUFLEN;
@@ -94,7 +94,7 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-
+	/*
 	// Send an initial buffer
 	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
 	if (iResult == SOCKET_ERROR) {
@@ -103,8 +103,9 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-
 	printf("Bytes Sent: %ld\n", iResult);
+	*/
+
 	/*
 	// shutdown the connection since no more data will be sent
 	iResult = shutdown(ConnectSocket, SD_SEND);
@@ -118,11 +119,15 @@ int __cdecl main(int argc, char **argv)
 	// Receive until the peer closes the connection
 
 	do {
+		for (int i = 0; i < DEFAULT_BUFLEN; i++) {
+			recvbuf[i] = '\0';
+		}
 		std::cout << "\nPlease enter a command: ";
 		std::string x;
-		std::cin >> x;
+		std::getline(std::cin, x);
 		std::cout << "\n";
-		iResult = send(ConnectSocket, x.c_str(), x.length(), 0);
+		const char* cstr = x.c_str();
+		iResult = send(ConnectSocket, x.c_str(), DEFAULT_BUFLEN, 0);
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("Bytes received: %d\n", iResult);
