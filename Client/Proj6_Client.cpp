@@ -5,8 +5,9 @@ Course: CSC 402
 Date: 04/16/2018
 */
 #define _CRT_SECURE_NO_WARNINGS
-
 #define WIN32_LEAN_AND_MEAN
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "5"
 
 #include <windows.h>
 #include <winsock2.h>
@@ -22,11 +23,10 @@ Date: 04/16/2018
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
+using namespace std;
 
 
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "5"
-
+//Client main method
 int __cdecl main(int argc, char **argv)
 {
 	WSADATA wsaData;
@@ -52,6 +52,7 @@ int __cdecl main(int argc, char **argv)
 		return 1;
 	}
 
+	//Prepare hints
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -94,47 +95,25 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-	/*
-	// Send an initial buffer
-	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
-	printf("Bytes Sent: %ld\n", iResult);
-	*/
 
-	/*
-	// shutdown the connection since no more data will be sent
-	iResult = shutdown(ConnectSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
-	*/
 	// Receive until the peer closes the connection
-
 	do {
 		//Empty buffer from last run
 		for (int i = 0; i < DEFAULT_BUFLEN; i++)
 			recvbuf[i] = '\0';
 
 		//Prompt for command
-		std::cout << "In the client ready to send a command...\n:";
+		cout << "In the client ready to send a command...\n:";
 
 		//Get command from keyboard
-		std::string x;
-		std::getline(std::cin, x);
-		std::cout << x << "\n";
+		string x;
+		getline(cin, x);
+		cout << x << "\n";
 
 		//Send command text as C string
 		//We send x.length() + 1 bytes becuase of the \0
 		iResult = send(ConnectSocket, x.c_str(), x.length() + 1, 0);
-		std::cout 
+		cout
 			<< "Bytes Sent: " << iResult << "\n"
 			<< "Command Sent: " << x << "\n";
 
@@ -143,11 +122,11 @@ int __cdecl main(int argc, char **argv)
 		if (iResult > 0)
 			printf("\nBytes received: %d\n", iResult);
 		else if (iResult == 0)
-			printf("Connection closed\n");
+			printf("Connection closed.\n");
 		else
 			printf("recv failed with error: %d\n", WSAGetLastError());
 
-		std::cout << std::string(recvbuf) << "\n";
+		cout << string(recvbuf) << "\n\n";
 	} while (iResult > 0);
 
 	// cleanup

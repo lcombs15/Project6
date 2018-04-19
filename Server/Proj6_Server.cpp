@@ -7,6 +7,8 @@ Date: 04/16/2018
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "5"
 
 #include <random>
 #include <windows.h>
@@ -22,14 +24,10 @@ Date: 04/16/2018
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
-
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "5"
-
 using namespace std;
 
 /*
-Evaluate command. Return NULL if command invalid.
+Evaluate command. Return empty string if command invalid.
 */
 string evaluate(string cmd) {
 	if (cmd._Equal("move")) {
@@ -45,6 +43,7 @@ string evaluate(string cmd) {
 	return string();
 }
 
+//Server main method
 int __cdecl main(void)
 {
 	WSADATA wsaData;
@@ -63,10 +62,11 @@ int __cdecl main(void)
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
+		cout << "WSAStartup failed with error: " << iResult << "\n";
 		return 1;
 	}
 
+	//Setup hints
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
@@ -76,7 +76,7 @@ int __cdecl main(void)
 	// Resolve the server address and port
 	iResult = getaddrinfo("localhost", DEFAULT_PORT, &hints, &result);
 	if (iResult != 0) {
-		printf("getaddrinfo failed with error: %d\n", iResult);
+		cout << "getaddrinfo failed with error: " << iResult << "\n";
 		WSACleanup();
 		return 1;
 	}
@@ -84,7 +84,7 @@ int __cdecl main(void)
 	// Create a SOCKET for connecting to server
 	ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (ListenSocket == INVALID_SOCKET) {
-		printf("socket failed with error: %ld\n", WSAGetLastError());
+		cout << "socket failed with error: " << WSAGetLastError() << "\n";
 		freeaddrinfo(result);
 		WSACleanup();
 		return 1;
@@ -93,7 +93,7 @@ int __cdecl main(void)
 	// Setup the TCP listening socket
 	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
-		printf("bind failed with error: %d\n", WSAGetLastError());
+		cout << "bind failed with error: " << WSAGetLastError() << "\n";
 		freeaddrinfo(result);
 		closesocket(ListenSocket);
 		WSACleanup();
@@ -104,7 +104,7 @@ int __cdecl main(void)
 
 	iResult = listen(ListenSocket, SOMAXCONN);
 	if (iResult == SOCKET_ERROR) {
-		printf("listen failed with error: %d\n", WSAGetLastError());
+		cout << "listen failed with error: " << WSAGetLastError() << "\n";
 		closesocket(ListenSocket);
 		WSACleanup();
 		return 1;
@@ -115,7 +115,7 @@ int __cdecl main(void)
 	// Accept a client socket
 	ClientSocket = accept(ListenSocket, NULL, NULL);
 	if (ClientSocket == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
+		cout << "accept failed with error: " << WSAGetLastError() << "\n";
 		closesocket(ListenSocket);
 		WSACleanup();
 		return 1;
@@ -126,18 +126,21 @@ int __cdecl main(void)
 
 	// Receive until the peer shuts down the connection
 	do {
+		//Prompt user & wait for input
 		cout << "\nIn the server loop, ready to recieve a command...\n";
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0) {
-			printf("Bytes received: %d\n", iResult);
 
-			cout << string(recvbuf) << "\n";
+		//Handle input
+		if (iResult > 0) {
+			cout
+				<< "Bytes received: " << iResult << "\n"
+				<< string(recvbuf) << "\n";
 
 			string result = evaluate(string(recvbuf));
 
 			//Handle exit command
 			if (string(recvbuf) == "quit") {
-				cout << "exiting server.\n";
+				cout << "exiting server.\n\n";
 				break;
 			}
 			else if (!result.empty()) {
@@ -150,19 +153,19 @@ int __cdecl main(void)
 			// Echo the buffer back to the sender
 			iSendResult = send(ClientSocket, result.c_str(), result.length() + 1, 0);
 			if (iSendResult == SOCKET_ERROR) {
-				printf("send failed with error: %d\n", WSAGetLastError());
+				cout << "send failed with error: " << WSAGetLastError() << "\n";
 				closesocket(ClientSocket);
 				WSACleanup();
 				return 1;
 			}
-			printf("Bytes sent: %d\n", iSendResult);
+			cout << "Bytes sent: " << iSendResult << "\n";
 		}
 		else if (iResult == 0) {
-			printf("Connection closing...\n");
+			cout << "Connection closing...\n";
 			send(ClientSocket, "", 0, 0);
 		}
 		else {
-			printf("recv failed with error: %d\n", WSAGetLastError());
+			cout << "recv failed with error: " << WSAGetLastError() << "\n";
 			closesocket(ClientSocket);
 			WSACleanup();
 			return 1;
@@ -173,7 +176,7 @@ int __cdecl main(void)
 	// shutdown the connection since we're done
 	iResult = shutdown(ClientSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
+		cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
 		closesocket(ClientSocket);
 		WSACleanup();
 		return 1;
