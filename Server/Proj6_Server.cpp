@@ -8,13 +8,17 @@ Date: 04/16/2018
 
 #define WIN32_LEAN_AND_MEAN
 
+#include <random>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -23,6 +27,23 @@ Date: 04/16/2018
 #define DEFAULT_PORT "5"
 
 using namespace std;
+
+/*
+Evaluate command. Return NULL if command invalid.
+*/
+string evaluate(string cmd) {
+	if (cmd._Equal("move")) {
+		return "move complete.";
+	}
+	else if (cmd._Equal("stats")) {
+		return "Here's a stat: " + to_string(rand());
+	}
+	else if (cmd._Equal("shoot")) {
+		return "Shoot for the stars!";
+	}
+
+	return string();
+}
 
 int __cdecl main(void)
 {
@@ -89,7 +110,7 @@ int __cdecl main(void)
 		return 1;
 	}
 
-	std::cout << "Server Starting.....\nWaiting for clients.....";
+	cout << "Server Starting.....\nWaiting for clients.....";
 
 	// Accept a client socket
 	ClientSocket = accept(ListenSocket, NULL, NULL);
@@ -105,15 +126,29 @@ int __cdecl main(void)
 
 	// Receive until the peer shuts down the connection
 	do {
-		std::cout << "In the server loop, ready to recieve a command...\n";
+		cout << "\nIn the server loop, ready to recieve a command...\n";
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-		string x = string(recvbuf);
-		std::cout << "\n(" + x + ")\n";
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 
+			cout << string(recvbuf) << "\n";
+
+			string result = evaluate(string(recvbuf));
+
+			//Handle exit command
+			if (string(recvbuf) == "quit") {
+				cout << "exiting server.\n";
+				break;
+			}
+			else if (!result.empty()) {
+				cout << string(recvbuf) << " command received\n";
+			}
+			else { //Check for invalid comman
+				result = "Command not found.";
+			}
+
 			// Echo the buffer back to the sender
-			iSendResult = send(ClientSocket, recvbuf, iResult, 0);
+			iSendResult = send(ClientSocket, result.c_str(), result.length() + 1, 0);
 			if (iSendResult == SOCKET_ERROR) {
 				printf("send failed with error: %d\n", WSAGetLastError());
 				closesocket(ClientSocket);
@@ -122,8 +157,10 @@ int __cdecl main(void)
 			}
 			printf("Bytes sent: %d\n", iSendResult);
 		}
-		else if (iResult == 0)
+		else if (iResult == 0) {
 			printf("Connection closing...\n");
+			send(ClientSocket, "", 0, 0);
+		}
 		else {
 			printf("recv failed with error: %d\n", WSAGetLastError());
 			closesocket(ClientSocket);
@@ -145,7 +182,5 @@ int __cdecl main(void)
 	// cleanup
 	closesocket(ClientSocket);
 	WSACleanup();
-
-	system("PAUSE");
 	return 0;
 }

@@ -119,6 +119,10 @@ int __cdecl main(int argc, char **argv)
 	// Receive until the peer closes the connection
 
 	do {
+		//Empty buffer from last run
+		for (int i = 0; i < DEFAULT_BUFLEN; i++)
+			recvbuf[i] = '\0';
+
 		//Prompt for command
 		std::cout << "In the client ready to send a command...\n:";
 
@@ -128,7 +132,8 @@ int __cdecl main(int argc, char **argv)
 		std::cout << x << "\n";
 
 		//Send command text as C string
-		iResult = send(ConnectSocket, x.c_str(), DEFAULT_BUFLEN, 0);
+		//We send x.length() + 1 bytes becuase of the \0
+		iResult = send(ConnectSocket, x.c_str(), x.length() + 1, 0);
 		std::cout 
 			<< "Bytes Sent: " << iResult << "\n"
 			<< "Command Sent: " << x << "\n";
