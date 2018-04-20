@@ -29,7 +29,13 @@ Date: 04/16/2018
 using namespace std;
 
 /*
-Evaluate command. Return empty string if command invalid.
+	Global so that main thread can pass
+	sockets to children threads
+*/
+SOCKET ClientSocket = INVALID_SOCKET;
+
+/*
+Evaluate command, return empty string if command invalid.
 */
 string evaluate(string cmd) {
 	if (cmd._Equal("move")) {
@@ -45,10 +51,7 @@ string evaluate(string cmd) {
 	return string();
 }
 
-
-
-SOCKET ClientSocket = INVALID_SOCKET;
-
+//Called within child thread, loop until client quits
 void handle_client(int pid) {
 	int iResult, iSendResult;
 	char recvbuf[DEFAULT_BUFLEN];
@@ -57,8 +60,11 @@ void handle_client(int pid) {
 	//Copy ClientSocket before next Client to connect wipes it out.
 	SOCKET mysocket = ClientSocket;
 
+	// Random must be seeded when thread is opened, not in main.
+	srand(time(NULL));
+
 	//Announce new connection!
-	cout << "\nClient " << pid << " connected.\n";
+	cout << "Client " << pid << " connected.\n";
 
 	// Receive until the peer shuts down the connection
 	do {
@@ -74,7 +80,7 @@ void handle_client(int pid) {
 
 			//Handle exit command
 			if (string(recvbuf) == "quit") {
-				cout << "exiting server.\n\n";
+				cout << "Client " << pid << " disconnected.\n\n";
 				break;
 			}
 			else if (!result.empty()) {
@@ -95,7 +101,7 @@ void handle_client(int pid) {
 			cout << "Bytes sent: " << iSendResult << "\n";
 		}
 		else if (iResult == 0) {
-			cout << "Connection closing...\n";
+			cout << "Connection closing for client " << pid << " ...\n";
 			send(mysocket, "", 0, 0);
 		}
 		else {
@@ -110,11 +116,13 @@ void handle_client(int pid) {
 	// shutdown the connection since we're done
 	iResult = shutdown(mysocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
-		cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
+		cout << "client " << pid << " disconnect failed with error: " << WSAGetLastError() << "\n";
 		closesocket(mysocket);
 		WSACleanup();
 		return;
 	}
+
+	//This thread is finished (connection lost / ended)
 	ExitThread(0);
 }
 
@@ -128,8 +136,6 @@ int __cdecl main(void)
 
 	struct addrinfo *result = NULL;
 	struct addrinfo hints;
-
-	//int iSendResult;
 
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -185,7 +191,7 @@ int __cdecl main(void)
 	int client_num = 1;
 	vector<thread> threads = vector<thread>();
 
-	cout << "Server Starting.....\nWaiting for clients.....";
+	cout << "Server Starting.....\nWaiting for clients.....\n";
 	while (true) {
 		// Accept a client socket
 		ClientSocket = accept(ListenSocket, NULL, NULL);
