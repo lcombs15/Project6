@@ -22,6 +22,7 @@ Date: 04/16/2018
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -52,9 +53,12 @@ void handle_client(int pid) {
 	int iResult, iSendResult;
 	char recvbuf[DEFAULT_BUFLEN];
 	int recvbuflen = DEFAULT_BUFLEN;
+
+	//Copy ClientSocket before next Client to connect wipes it out.
 	SOCKET mysocket = ClientSocket;
 
-	cout << "\nClient " << pid << " connected.";
+	//Announce new connection!
+	cout << "\nClient " << pid << " connected.\n";
 
 	// Receive until the peer shuts down the connection
 	do {
@@ -181,28 +185,25 @@ int __cdecl main(void)
 		return 1;
 	}
 
-	int count = 1;
+	int client_num = 1;
+	vector<thread> threads = vector<thread>();
 
 	cout << "Server Starting.....\nWaiting for clients.....";
 	while (true) {
 		// Accept a client socket
 		ClientSocket = accept(ListenSocket, NULL, NULL);
-		if (ClientSocket == INVALID_SOCKET) {
-			cout << "accept failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ListenSocket);
-			WSACleanup();
-			return 1;
-
-		}
-		else {
-			new thread(handle_client, count);
-			Sleep(1);
-			//ClientSocket = INVALID_SOCKET;
-			count++;
+		if (ClientSocket != INVALID_SOCKET) {
+			threads.push_back(thread(handle_client, client_num));
+			Sleep(100);
+			client_num++;
 		}
 	}
 
+	for (thread& t : threads) {
+		t.join();
+	}
+
 	// No longer need server socket
-	//closesocket(ListenSocket);
+	closesocket(ListenSocket);
 	return 0;
 }
