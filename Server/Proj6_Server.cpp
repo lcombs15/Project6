@@ -115,10 +115,7 @@ void handle_client(int pid) {
 		WSACleanup();
 		return;
 	}
-
-	// cleanup
-	closesocket(mysocket);
-	WSACleanup();
+	ExitThread(0);
 }
 
 //Server main method
