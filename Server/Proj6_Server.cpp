@@ -188,22 +188,18 @@ int __cdecl main(void)
 		return 1;
 	}
 
-	int client_num = 1;
 	vector<thread> threads = vector<thread>();
-
 	cout << "Server Starting.....\nWaiting for clients.....\n";
 	while (true) {
 		// Accept a client socket
 		ClientSocket = accept(ListenSocket, NULL, NULL);
 		if (ClientSocket != INVALID_SOCKET) {
-			threads.push_back(thread(handle_client, client_num));
-			Sleep(100);
-			client_num++;
-		}
-	}
+			//Keep track of threads just in case
+			threads.push_back(thread(handle_client, threads.size() + 1));
 
-	for (thread& t : threads) {
-		t.join();
+			//Sleep so new thread can copy socket
+			Sleep(100);
+		}
 	}
 
 	// No longer need server socket
